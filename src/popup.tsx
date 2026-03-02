@@ -88,10 +88,26 @@ function IndexPopup() {
           </div>
         </div>
 
+        <div style={{
+          background: '#f0f4ff',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginBottom: '1rem',
+          border: '2px dashed #667eea'
+        }}>
+          <p style={{ fontSize: '14px', color: '#333', marginBottom: '0.5rem', fontWeight: '600' }}>
+            💡 使用方法
+          </p>
+          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
+            鼠标悬停在文本上，按住 <kbd style={{ background: '#667eea', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>Shift</kbd> 键即可翻译！
+          </p>
+        </div>
+
         <button
           className="translate-button"
           onClick={handleTranslatePage}
           disabled={isTranslating || !config.api.apiKey}
+          style={{ display: 'none' }} // 隐藏整页翻译按钮
         >
           {isTranslating ? '⏳ Translating...' : '🚀 Translate this page'}
         </button>
@@ -100,10 +116,6 @@ function IndexPopup() {
           <div className="setting-item">
             <span className="setting-label">Target Language:</span>
             <span className="setting-value">{config.translation.targetLanguage}</span>
-          </div>
-          <div className="setting-item">
-            <span className="setting-label">Display Mode:</span>
-            <span className="setting-value">{config.display.mode}</span>
           </div>
           <div className="setting-item">
             <span className="setting-label">API Provider:</span>

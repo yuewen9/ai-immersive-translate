@@ -1,7 +1,7 @@
 {
   "name": "ai-immersive-translate",
   "displayName": "AI Immersive Translate",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A free, AI-powered bilingual web page translation extension supporting BigModel API",
   "author": "Your Name",
   "license": "MIT",
