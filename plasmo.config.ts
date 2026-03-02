@@ -2,10 +2,9 @@ import type { PlasmoConfig } from "plasmo"
 
 const config: PlasmoConfig = {
   src: "src",
-  excludes: ["content.tsx"],  // Exclude full version during v0.0.3 debug
   manifest: {
     name: "AI Immersive Translate",
-    version: "0.0.3",
+    version: "0.0.4",
     description: "A free, AI-powered bilingual web page translation extension supporting BigModel API",
     permissions: [
       "storage",

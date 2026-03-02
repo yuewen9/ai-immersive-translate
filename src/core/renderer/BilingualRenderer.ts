@@ -139,13 +139,13 @@ export class BilingualRenderer {
 
     switch (this.mode) {
       case 'side-by-side':
-        this.renderSideBySide(element, unit.originalText, translatedText);
+        this.renderSideBySide(unit.id, element, unit.originalText, translatedText);
         break;
       case 'top-bottom':
-        this.renderTopBottom(element, unit.originalText, translatedText);
+        this.renderTopBottom(unit.id, element, unit.originalText, translatedText);
         break;
       case 'hover':
-        this.renderHover(element, unit.originalText, translatedText);
+        this.renderHover(unit.id, element, unit.originalText, translatedText);
         break;
     }
   }
@@ -154,6 +154,7 @@ export class BilingualRenderer {
    * Render side by side mode
    */
   private renderSideBySide(
+    id: string,
     element: HTMLElement,
     original: string,
     translation: string
@@ -173,13 +174,14 @@ export class BilingualRenderer {
     container.appendChild(translationDiv);
 
     element.replaceWith(container);
-    this.injectedElements.set(element.textContent || '', container);
+    this.injectedElements.set(id, container);
   }
 
   /**
    * Render top bottom mode
    */
   private renderTopBottom(
+    id: string,
     element: HTMLElement,
     original: string,
     translation: string
@@ -199,13 +201,14 @@ export class BilingualRenderer {
     container.appendChild(translationDiv);
 
     element.replaceWith(container);
-    this.injectedElements.set(element.textContent || '', container);
+    this.injectedElements.set(id, container);
   }
 
   /**
    * Render hover mode
    */
   private renderHover(
+    id: string,
     element: HTMLElement,
     original: string,
     translation: string
@@ -232,7 +235,7 @@ export class BilingualRenderer {
 
     element.replaceWith(span);
     span.appendChild(tooltip);
-    this.injectedElements.set(original, span);
+    this.injectedElements.set(id, span);
   }
 
   /**

@@ -3,12 +3,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Storage } from '@plasmohq/storage';
 import { ExtensionConfig } from './types';
 import { DEFAULT_CONFIG } from './lib/constants';
+import { mergeConfig, STORAGE_KEYS } from './lib/config';
+import { getLocalStorageValue } from './lib/storage';
 import './style.css';
-
-const storage = new Storage();
 
 function IndexPopup() {
   const [config, setConfig] = useState<ExtensionConfig>(DEFAULT_CONFIG);
@@ -22,10 +21,8 @@ function IndexPopup() {
 
   const loadConfig = async () => {
     try {
-      const savedConfig = await storage.get<ExtensionConfig>('ai_translate_config');
-      if (savedConfig) {
-        setConfig(savedConfig);
-      }
+      const savedConfig = await getLocalStorageValue<ExtensionConfig>(STORAGE_KEYS.CONFIG);
+      setConfig(mergeConfig(savedConfig));
     } catch (error) {
       console.error('Failed to load config:', error);
     }
@@ -33,7 +30,7 @@ function IndexPopup() {
 
   const loadStatistics = async () => {
     try {
-      const stats = await storage.get('ai_translate_statistics');
+      const stats = await getLocalStorageValue(STORAGE_KEYS.STATISTICS);
       if (stats && typeof stats === 'object' && 'translationsCount' in stats) {
         setTranslatedCount((stats as any).translationsCount || 0);
       }
@@ -72,7 +69,7 @@ function IndexPopup() {
     <div className="popup-container">
       <header className="popup-header">
         <h1>🌐 AI Immersive Translate</h1>
-        <p className="version">v0.0.3</p>
+        <p className="version">v0.0.4</p>
       </header>
 
       <div className="popup-content">

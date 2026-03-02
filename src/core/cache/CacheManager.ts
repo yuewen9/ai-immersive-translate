@@ -5,6 +5,7 @@
 import { Storage } from '@plasmohq/storage';
 import { CacheEntry, TranslationResult } from '../../types';
 import { STORAGE_KEYS, CACHE_DURATION } from '../../lib/constants';
+import { generateHash } from '../../lib/utils';
 
 const storage = new Storage();
 
@@ -38,7 +39,8 @@ export class CacheManager {
    * Generate cache key
    */
   generateKey(text: string, from: string, to: string): string {
-    return `${from}-${to}-${text}`;
+    const normalizedText = text.replace(/\s+/g, ' ').trim();
+    return `${from}-${to}-${generateHash(normalizedText)}`;
   }
 
   /**

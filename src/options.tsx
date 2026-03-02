@@ -3,12 +3,15 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Storage } from '@plasmohq/storage';
 import { ExtensionConfig, RenderMode } from './types';
 import { DEFAULT_CONFIG, SUPPORTED_LANGUAGES } from './lib/constants';
+import { mergeConfig, STORAGE_KEYS } from './lib/config';
+import {
+  getLocalStorageValue,
+  removeLocalStorageValue,
+  setLocalStorageValue
+} from './lib/storage';
 import './style.css';
-
-const storage = new Storage();
 
 function IndexOptions() {
   const [config, setConfig] = useState<ExtensionConfig>(DEFAULT_CONFIG);
@@ -22,10 +25,8 @@ function IndexOptions() {
 
   const loadConfig = async () => {
     try {
-      const savedConfig = await storage.get<ExtensionConfig>('ai_translate_config');
-      if (savedConfig) {
-        setConfig(savedConfig);
-      }
+      const savedConfig = await getLocalStorageValue<ExtensionConfig>(STORAGE_KEYS.CONFIG);
+      setConfig(mergeConfig(savedConfig));
     } catch (error) {
       console.error('Failed to load config:', error);
     }
@@ -33,7 +34,7 @@ function IndexOptions() {
 
   const loadCacheSize = async () => {
     try {
-      const cache = await storage.get('ai_translate_cache');
+      const cache = await getLocalStorageValue(STORAGE_KEYS.CACHE);
       if (cache && Array.isArray(cache)) {
         setCacheSize(cache.length);
       }
@@ -45,7 +46,7 @@ function IndexOptions() {
   const saveConfig = async (newConfig: ExtensionConfig) => {
     setSaveStatus('saving');
     try {
-      await storage.set('ai_translate_config', newConfig);
+      await setLocalStorageValue(STORAGE_KEYS.CONFIG, newConfig);
       setConfig(newConfig);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -59,7 +60,7 @@ function IndexOptions() {
   const handleClearCache = async () => {
     if (confirm('Are you sure you want to clear the translation cache?')) {
       try {
-        await storage.remove('ai_translate_cache');
+        await removeLocalStorageValue(STORAGE_KEYS.CACHE);
         setCacheSize(0);
         alert('Cache cleared successfully');
       } catch (error) {
@@ -79,7 +80,7 @@ function IndexOptions() {
     <div className="options-container">
       <header className="options-header">
         <h1>⚙️ AI Immersive Translate Settings</h1>
-        <p className="version">v0.0.3</p>
+        <p className="version">v0.0.4</p>
       </header>
 
       <main className="options-content">
