@@ -2,6 +2,8 @@
  * Core types for AI Immersive Translate
  */
 
+export type ApiProvider = 'bigmodel' | 'openai' | 'deepseek' | 'kimi';
+
 // Translation unit structure
 export interface TranslationUnit {
   id: string;
@@ -40,7 +42,7 @@ export type RenderMode = 'side-by-side' | 'top-bottom' | 'hover';
 // Extension configuration
 export interface ExtensionConfig {
   api: {
-    provider: 'bigmodel' | 'openai' | 'google';
+    provider: ApiProvider;
     apiKey: string;
     model: string;
   };
@@ -84,6 +86,15 @@ export interface Language {
   code: string;
   name: string;
   nativeName?: string;
+}
+
+export interface ApiProviderOption {
+  value: ApiProvider;
+  label: string;
+  endpoint: string;
+  models: string[];
+  keyUrl: string;
+  keyPlaceholder: string;
 }
 
 // Message types for extension communication

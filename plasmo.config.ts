@@ -4,7 +4,7 @@ const config: PlasmoConfig = {
   src: "src",
   manifest: {
     name: "AI Immersive Translate",
-    version: "0.0.4",
+    version: "0.0.5",
     description: "A free, AI-powered bilingual web page translation extension supporting BigModel API",
     permissions: [
       "storage",

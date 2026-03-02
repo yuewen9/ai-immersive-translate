@@ -1,4 +1,4 @@
-import { BIGMODEL_API_ENDPOINT, DEFAULT_CONFIG } from "./lib/constants"
+import { API_PROVIDER_MAP, DEFAULT_CONFIG } from "./lib/constants"
 import { ExtensionConfig, TranslationOptions, TranslationResult } from "./types"
 
 const STORAGE_KEYS = {
@@ -90,9 +90,15 @@ const getLanguageName = (code: string) =>
     } as Record<string, string>
   )[code] || code
 
-const getCacheKey = (text: string, from: string, to: string) => {
+const getCacheKey = (
+  provider: ExtensionConfig["api"]["provider"],
+  model: string,
+  text: string,
+  from: string,
+  to: string
+) => {
   const normalizedText = text.replace(/\s+/g, " ").trim()
-  return `${from}-${to}-${generateHash(normalizedText)}`
+  return `${provider}-${model}-${from}-${to}-${generateHash(normalizedText)}`
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -103,7 +109,8 @@ const loadCache = async (): Promise<CacheEntry[]> => {
 }
 
 const getCachedTranslation = async (text: string, from: string, to: string) => {
-  const key = getCacheKey(text, from, to)
+  const config = mergeConfig(await getStorage<ExtensionConfig>(STORAGE_KEYS.CONFIG))
+  const key = getCacheKey(config.api.provider, config.api.model, text, from, to)
   const now = Date.now()
   const cache = await loadCache()
   const validCache = cache.filter((entry) => now - entry.timestamp < CACHE_DURATION)
@@ -122,7 +129,8 @@ const saveCachedTranslation = async (
   to: string,
   result: TranslationResult
 ) => {
-  const key = getCacheKey(text, from, to)
+  const config = mergeConfig(await getStorage<ExtensionConfig>(STORAGE_KEYS.CONFIG))
+  const key = getCacheKey(config.api.provider, config.api.model, text, from, to)
   const cache = await loadCache()
   const nextCache = cache
     .filter((entry) => entry.key !== key)
@@ -147,14 +155,15 @@ const translateText = async (
   text: string,
   options: TranslationOptions
 ): Promise<TranslationResult> => {
-  const cacheKey = getCacheKey(text, options.from, options.to)
+  const config = mergeConfig(await getStorage<ExtensionConfig>(STORAGE_KEYS.CONFIG))
+  const cacheKey = getCacheKey(config.api.provider, config.api.model, text, options.from, options.to)
   const inflightRequest = inflightTranslations.get(cacheKey)
 
   if (inflightRequest) {
     return inflightRequest
   }
 
-  const request = performTranslation(text, options, cacheKey).finally(() => {
+  const request = performTranslation(text, options).finally(() => {
     inflightTranslations.delete(cacheKey)
   })
 
@@ -164,13 +173,17 @@ const translateText = async (
 
 const performTranslation = async (
   text: string,
-  options: TranslationOptions,
-  cacheKey: string
+  options: TranslationOptions
 ): Promise<TranslationResult> => {
   const config = mergeConfig(await getStorage<ExtensionConfig>(STORAGE_KEYS.CONFIG))
+  const providerConfig = API_PROVIDER_MAP[config.api.provider]
 
   if (!config.api.apiKey) {
     throw new Error("API key is not set")
+  }
+
+  if (!providerConfig) {
+    throw new Error(`Unsupported API provider: ${config.api.provider}`)
   }
 
   const cached = await getCachedTranslation(text, options.from, options.to)
@@ -181,7 +194,7 @@ const performTranslation = async (
   const now = Date.now()
   if (now < rateLimitedUntil) {
     const retrySeconds = Math.ceil((rateLimitedUntil - now) / 1000)
-    throw new Error(`Rate limited by API provider. Try again in ${retrySeconds}s.`)
+      throw new Error(`${providerConfig.label} rate limit active. Try again in ${retrySeconds}s.`)
   }
 
   const waitTime = MIN_REQUEST_INTERVAL - (now - lastRequestTime)
@@ -202,7 +215,7 @@ const performTranslation = async (
   const timeoutId = setTimeout(() => controller.abort(), 12000)
 
   try {
-    const response = await fetch(BIGMODEL_API_ENDPOINT, {
+    const response = await fetch(providerConfig.endpoint, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${config.api.apiKey}`,
@@ -233,7 +246,7 @@ const performTranslation = async (
 
         rateLimitedUntil = Date.now() + (Number.isFinite(retryAfterMs) ? retryAfterMs : DEFAULT_RATE_LIMIT_COOLDOWN)
         throw new Error(
-          `Rate limited by API provider. Try again in ${Math.ceil((rateLimitedUntil - Date.now()) / 1000)}s.`
+          `${providerConfig.label} rate limited. Try again in ${Math.ceil((rateLimitedUntil - Date.now()) / 1000)}s.`
         )
       }
 
@@ -262,7 +275,7 @@ const performTranslation = async (
     return result
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("BigModel request timed out")
+      throw new Error(`${providerConfig.label} request timed out`)
     }
 
     throw error

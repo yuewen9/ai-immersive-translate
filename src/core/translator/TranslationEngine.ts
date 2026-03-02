@@ -3,7 +3,7 @@
  */
 
 import { TranslationOptions, TranslationResult } from '../../types';
-import { BIGMODEL_API_ENDPOINT } from '../../lib/constants';
+import { API_PROVIDER_MAP } from '../../lib/constants';
 import { cacheManager } from '../cache/CacheManager';
 
 export class TranslationEngine {
@@ -98,7 +98,7 @@ export class TranslationEngine {
       : `Translate the following text from ${sourceLang} to ${targetLang}. Only provide the translation, no explanations:\n\n${text}`;
 
     try {
-      const response = await fetch(BIGMODEL_API_ENDPOINT, {
+      const response = await fetch(API_PROVIDER_MAP.bigmodel.endpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,

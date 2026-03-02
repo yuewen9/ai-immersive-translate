@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { ExtensionConfig, RenderMode } from './types';
-import { DEFAULT_CONFIG, SUPPORTED_LANGUAGES } from './lib/constants';
+import { API_PROVIDERS, DEFAULT_CONFIG, SUPPORTED_LANGUAGES } from './lib/constants';
 import { mergeConfig, STORAGE_KEYS } from './lib/config';
 import {
   getLocalStorageValue,
@@ -17,6 +17,8 @@ function IndexOptions() {
   const [config, setConfig] = useState<ExtensionConfig>(DEFAULT_CONFIG);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [cacheSize, setCacheSize] = useState(0);
+  const selectedProvider =
+    API_PROVIDERS.find((provider) => provider.value === config.api.provider) || API_PROVIDERS[0];
 
   useEffect(() => {
     loadConfig();
@@ -26,7 +28,14 @@ function IndexOptions() {
   const loadConfig = async () => {
     try {
       const savedConfig = await getLocalStorageValue<ExtensionConfig>(STORAGE_KEYS.CONFIG);
-      setConfig(mergeConfig(savedConfig));
+      const mergedConfig = mergeConfig(savedConfig);
+      const provider = API_PROVIDERS.find((item) => item.value === mergedConfig.api.provider) || API_PROVIDERS[0];
+
+      if (!provider.models.includes(mergedConfig.api.model)) {
+        mergedConfig.api.model = provider.models[0];
+      }
+
+      setConfig(mergedConfig);
     } catch (error) {
       console.error('Failed to load config:', error);
     }
@@ -80,7 +89,7 @@ function IndexOptions() {
     <div className="options-container">
       <header className="options-header">
         <h1>⚙️ AI Immersive Translate Settings</h1>
-        <p className="version">v0.0.4</p>
+        <p className="version">v0.0.5</p>
       </header>
 
       <main className="options-content">
@@ -89,7 +98,32 @@ function IndexOptions() {
           <h2>🔑 API Configuration</h2>
 
           <div className="form-group">
-            <label htmlFor="apiKey">BigModel API Key</label>
+            <label htmlFor="provider">API Provider</label>
+            <select
+              id="provider"
+              value={config.api.provider}
+              onChange={(e) => {
+                const provider = API_PROVIDERS.find((item) => item.value === e.target.value) || API_PROVIDERS[0];
+                updateConfig({
+                  ...config,
+                  api: {
+                    ...config.api,
+                    provider: provider.value,
+                    model: provider.models[0]
+                  }
+                });
+              }}
+            >
+              {API_PROVIDERS.map((provider) => (
+                <option key={provider.value} value={provider.value}>
+                  {provider.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="apiKey">{selectedProvider.label} API Key</label>
             <input
               type="password"
               id="apiKey"
@@ -100,16 +134,16 @@ function IndexOptions() {
                   api: { ...config.api, apiKey: e.target.value }
                 })
               }
-              placeholder="Enter your BigModel API key"
+              placeholder={selectedProvider.keyPlaceholder}
             />
             <p className="help-text">
               Get your API key from{' '}
               <a
-                href="https://open.bigmodel.cn/"
+                href={selectedProvider.keyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                open.bigmodel.cn
+                {selectedProvider.keyUrl.replace(/^https?:\/\//, '')}
               </a>
             </p>
           </div>
@@ -126,8 +160,11 @@ function IndexOptions() {
                 })
               }
             >
-              <option value="glm-4">GLM-4</option>
-              <option value="glm-3-turbo">GLM-3 Turbo</option>
+              {selectedProvider.models.map((model: string) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
             </select>
           </div>
         </section>
@@ -336,7 +373,7 @@ function IndexOptions() {
 
       <footer className="options-footer">
         <p>
-          AI Immersive Translate v0.0.3 |{' '}
+          AI Immersive Translate v0.0.5 |{' '}
           <a
             href="https://github.com/yourusername/ai-immersive-translate"
             target="_blank"

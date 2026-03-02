@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { ExtensionConfig } from './types';
-import { DEFAULT_CONFIG } from './lib/constants';
+import { API_PROVIDER_MAP, DEFAULT_CONFIG } from './lib/constants';
 import { mergeConfig, STORAGE_KEYS } from './lib/config';
 import { getLocalStorageValue } from './lib/storage';
 import './style.css';
@@ -13,6 +13,7 @@ function IndexPopup() {
   const [config, setConfig] = useState<ExtensionConfig>(DEFAULT_CONFIG);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedCount, setTranslatedCount] = useState(0);
+  const providerLabel = API_PROVIDER_MAP[config.api.provider]?.label || config.api.provider;
 
   useEffect(() => {
     loadConfig();
@@ -41,7 +42,7 @@ function IndexPopup() {
 
   const handleTranslatePage = async () => {
     if (!config.api.apiKey) {
-      alert('Please set your BigModel API key in settings first');
+      alert('Please set your API key in settings first');
       return;
     }
 
@@ -69,7 +70,7 @@ function IndexPopup() {
     <div className="popup-container">
       <header className="popup-header">
         <h1>🌐 AI Immersive Translate</h1>
-        <p className="version">v0.0.4</p>
+        <p className="version">v0.0.5</p>
       </header>
 
       <div className="popup-content">
@@ -116,7 +117,7 @@ function IndexPopup() {
           </div>
           <div className="setting-item">
             <span className="setting-label">API Provider:</span>
-            <span className="setting-value">{config.api.provider}</span>
+            <span className="setting-value">{providerLabel}</span>
           </div>
         </div>
 
@@ -126,7 +127,7 @@ function IndexPopup() {
       </div>
 
       <footer className="popup-footer">
-        <p>Powered by BigModel API</p>
+        <p>Powered by {providerLabel} API</p>
       </footer>
     </div>
   );

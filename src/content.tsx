@@ -1,4 +1,3 @@
-import { CacheManager } from "./core/cache/CacheManager"
 import { TextExtractor } from "./core/extractor/TextExtractor"
 import { DEFAULT_CONFIG, MAX_TEXT_LENGTH } from "./lib/constants"
 import { mergeConfig, STORAGE_KEYS } from "./lib/config"
@@ -6,7 +5,6 @@ import { getLocalStorageValue } from "./lib/storage"
 import { ExtensionConfig, TranslationResult } from "./types"
 
 const extractor = new TextExtractor()
-const cacheManager = new CacheManager()
 
 class HoverTranslateController {
   private config: ExtensionConfig = DEFAULT_CONFIG
@@ -167,7 +165,7 @@ class HoverTranslateController {
     }
 
     if (!this.config.api.apiKey) {
-      this.showTooltip(this.hoveredElement, "请先在设置中填写 BigModel API Key。")
+      this.showTooltip(this.hoveredElement, "请先在设置中填写 API Key。")
       return
     }
 
@@ -217,7 +215,13 @@ class HoverTranslateController {
       to: this.config.translation.targetLanguage
     }
 
-    const cacheKey = cacheManager.generateKey(text, options.from, options.to)
+    const cacheKey = [
+      this.config.api.provider,
+      this.config.api.model,
+      options.from,
+      options.to,
+      text.replace(/\s+/g, " ").trim()
+    ].join("::")
     const pendingRequest = this.inflightRequests.get(cacheKey)
 
     if (pendingRequest) {
@@ -295,7 +299,7 @@ class HoverTranslateController {
     }
 
     if (error.message.includes("API key is not set")) {
-      return "Please set your BigModel API key in Settings."
+      return "Please set your API key in Settings."
     }
 
     return error.message
