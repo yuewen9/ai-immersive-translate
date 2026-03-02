@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run generate-icons)",
+      "Bash(mv scripts/generate-icons.js scripts/generate-icons.cjs && chmod +x scripts/generate-icons.cjs)",
+      "Bash(node scripts/create-png-icons.cjs)",
+      "Bash(node scripts/create-simple-pngs.cjs)",
+      "Bash(tree -L 2 -I 'node_modules' 2>/dev/null || find . -maxdepth 2 -type f -not -path './node_modules/*' | head -40)",
+      "Bash(npm install)",
+      "Bash(sleep 60 && if [ -f node_modules/plasmo/package.json ]; then echo \"Installation completed!\"; ls -la node_modules | head -20; else echo \"Still installing...\"; fi)",
+      "Bash(rm -rf node_modules package-lock.json && npm install --legacy-peer-deps)",
+      "Bash(npm install --ignore-scripts --legacy-peer-deps)",
+      "Bash(npm run dev 2>&1 | head -100)",
+      "Bash(npm install --platform=linux --arch=x64 sharp --legacy-peer-deps)",
+      "Bash(npm run dev 2>&1)",
+      "Bash(node scripts/create-plasmo-icons.cjs)",
+      "Bash(npm run dev)",
+      "Bash(ls -la build/chrome-mv3-dev/*.html build/chrome-mv3-dev/*.js 2>/dev/null | head -20)",
+      "Bash(curl -s http://localhost:3000 2>/dev/null | head -20 || echo \"No local server\")",
+      "Bash(pkill -f \"plasmo dev\")",
+      "Bash(ls -la src/*.tsx src/*.ts 2>/dev/null | head -20)",
+      "Bash(cat build/chrome-mv3-dev/manifest.json | python3 -m json.tool 2>/dev/null || cat build/chrome-mv3-dev/manifest.json)",
+      "Bash(cat build/chrome-mv3-dev/manifest.json | python3 -m json.tool 2>/dev/null | grep -A2 -B2 \"popup\\\\|options\" || echo \"No popup/options found\")",
+      "Bash(npx plasmo build --verbose 2>&1 | tee /tmp/plasmo-build.log | tail -100)",
+      "Bash(npx plasmo build 2>&1 | tail -50)",
+      "Bash(cat build/chrome-mv3-dev/manifest.json | python3 -m json.tool 2>/dev/null)",
+      "Bash(cat build/chrome-mv3-prod/manifest.json | python3 -m json.tool 2>/dev/null | head -60)",
+      "Bash(cat << 'EOF' > /home/jx2/project/translate_yuewen9/TEST_INSTRUCTIONS.txt\n═══════════════════════════════════════════════════════════════\n                 🧪 快速测试说明\n═══════════════════════════════════════════════════════════════\n\n📋 测试步骤：\n\n1️⃣  打开 Chrome 浏览器\n\n2️⃣  在地址栏输入：\n    chrome://extensions/\n\n3️⃣  启用\"开发者模式\"（右上角开关）\n\n4️⃣  点击\"加载已解压的扩展程序\"\n\n5️⃣  在文件选择器中，导航到：\n    /home/jx2/project/translate_yuewen9/build/chrome-mv3-prod/\n\n6️⃣  选择该文件夹并确认\n\n═══════════════════════════════════════════════════════════════\n\n🔑 首次使用前需要：\n\n1. 获取 BigModel API Key:\n   → 访问: https://open.bigmodel.cn/\n   → 注册并创建 API Key\n\n2. 配置扩展:\n   → 点击扩展图标\n   → 点击 \"⚙️ Settings\"\n   → 粘贴 API Key\n   → 选择目标语言\n   → 保存设置\n\n═══════════════════════════════════════════════════════════════\n\n🌐 测试翻译：\n\n1. 访问一个英文网站（如 BBC News）\n2. 点击扩展图标\n3. 点击 \"🚀 Translate this page\"\n4. 等待翻译完成\n5. 将鼠标悬停在文本上查看翻译\n\n═══════════════════════════════════════════════════════════════\n\n📚 更多信息：\n\n• 详细测试指南: TEST_GUIDE.md\n• 项目概述: README.md\n• 快速开始: QUICKSTART.md\n• 测试结果: TEST_RESULTS.md\n\n═══════════════════════════════════════════════════════════════\nEOF\ncat /home/jx2/project/translate_yuewen9/TEST_INSTRUCTIONS.txt)",
+      "Bash(cat << 'EOF'\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n                    📁 项目文件结构\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📂 ai-immersive-translate/\n│\n├── 📄 核心文档\n│   ├── README.md                ⭐ 项目概述\n│   ├── QUICKSTART.md            ⭐ 快速开始（5分钟）\n│   ├── INSTALL.md               安装指南\n│   ├── DEVELOPMENT.md           开发者指南\n│   ├── TEST_GUIDE.md            ⭐ 测试指南\n│   ├── TEST_RESULTS.md          测试结果报告\n│   ├── TEST_INSTRUCTIONS.txt    快速测试说明\n│   ├── ICONS.md                 图标制作说明\n│   └── LICENSE                  MIT 许可证\n│\n├── 🔧 配置文件\n│   ├── package.json             项目配置\n│   ├── tsconfig.json            TypeScript 配置\n│   ├── plasmo.config.ts         Plasmo 框架配置\n│   ├── .prettierrc              代码格式化配置\n│   ├── .gitignore               Git 忽略文件\n│   └── .npmrc                   NPM 配置\n│\n├── 💻 源代码 \\(src/\\)\n│   ├── background.ts            后台服务脚本\n│   ├── content.tsx              内容脚本（页面翻译）\n│   ├── popup.tsx                弹窗界面\n│   ├── options.tsx              设置页面\n│   ├── style.css                样式文件\n│   │\n│   ├── components/              UI 组件（已移动到根目录）\n│   ├── core/                    核心功能模块\n│   │   ├── translator/          翻译引擎\n│   │   ├── extractor/           文本提取\n│   │   ├── cache/               缓存管理\n│   │   └── renderer/            双语渲染\n│   │\n│   ├── lib/                     工具库\n│   │   ├── constants.ts         常量定义\n│   │   └── utils.ts             工具函数\n│   │\n│   ├── types/                   TypeScript 类型\n│   │   └── index.ts\n│   │\n│   └── assets/                  静态资源\n│       └── icon.svg             SVG 图标源文件\n│\n├── 🛠️ 脚本 \\(scripts/\\)\n│   ├── create-plasmo-icons.cjs  创建 Plasmo 图标\n│   ├── create-png-icons.cjs     创建 PNG 图标\n│   └── create-simple-pngs.cjs   创建简单 PNG\n│\n├── 🏗️ 构建输出 \\(build/\\)\n│   └── chrome-mv3-prod/         ⭐ 生产版本（可加载）\n│       ├── popup.html           弹窗页面\n│       ├── options.html         设置页面\n│       ├── content.*.js         内容脚本\n│       ├── popup.*.js           弹窗脚本\n│       ├── popup.*.css          弹窗样式\n│       ├── options.*.js         设置脚本\n│       ├── manifest.json        扩展清单\n│       ├── static/\n│       │   └── background/      后台脚本\n│       └── icon*.png            图标文件\n│\n└── 🖼️ 图标文件 \\(根目录\\)\n    ├── icon16.png               16x16 图标\n    ├── icon32.png               32x32 图标\n    ├── icon48.png               48x48 图标\n    ├── icon64.png               64x64 图标\n    ├── icon128.png              128x128 图标\n    └── icon*.svg                SVG 源文件\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📊 重要文件说明：\n\n⭐ 必读文档\n   → README.md         了解项目\n   → QUICKSTART.md     快速上手\n   → TEST_GUIDE.md     测试步骤\n\n🚀 立即使用\n   → build/chrome-mv3-prod/  加载这个目录到 Chrome\n\n💻 开发相关\n   → src/               源代码\n   → scripts/           构建脚本\n   → package.json       依赖配置\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nEOF)",
+      "Bash(pkill -f \"plasmo\" 2>/dev/null; echo \"开发服务器已停止\")",
+      "Bash(cat > .gitignore << 'EOF'\n# Dependencies\nnode_modules/\npackage-lock.json\n\n# Build outputs\nbuild/\ndist/\n.plasmo/\n\n# Logs\n*.log\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n\n# Editor\n.vscode/\n.idea/\n*.swp\n*.swo\n\n# OS\n.DS_Store\nThumbs.db\n\n# Temporary files\n*.tmp\n.temp/\n.cache/\n\n# Generated files\n*.png\nicon*.png\n!src/assets/icon.svg\n\n# Test logs\n/tmp/\nEOF\ncat .gitignore)",
+      "Bash(git init && echo \"✅ Git仓库已初始化\")",
+      "Bash(git add . && echo \"✅ 文件已添加到暂存区\")"
+    ]
+  }
+}

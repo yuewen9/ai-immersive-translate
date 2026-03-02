@@ -1,0 +1,44 @@
+{
+  "name": "ai-immersive-translate",
+  "displayName": "AI Immersive Translate",
+  "version": "0.0.1",
+  "description": "A free, AI-powered bilingual web page translation extension supporting BigModel API",
+  "author": "Your Name",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "dev:chrome": "plasmo dev --chrome",
+    "dev:firefox": "plasmo dev --firefox",
+    "generate-icons": "node scripts/generate-icons.cjs"
+  },
+  "dependencies": {
+    "@plasmohq/storage": "^1.13.0",
+    "plasmo": "^0.89.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@plasmohq/prettier-plugin-sort-imports": "^3.6.4",
+    "@types/chrome": "^0.0.268",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "prettier": "^2.8.8",
+    "typescript": "^5.7.2"
+  },
+  "manifest": {
+    "host_permissions": [
+      "https://*/*"
+    ],
+    "permissions": [
+      "storage",
+      "activeTab",
+      "scripting"
+    ]
+  }
+}

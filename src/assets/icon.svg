@@ -1,0 +1,22 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <rect width="128" height="128" rx="24" fill="url(#grad)"/>
+
+  <!-- Globe icon -->
+  <circle cx="64" cy="64" r="36" stroke="white" stroke-width="4" fill="none"/>
+  <ellipse cx="64" cy="64" rx="36" ry="14" stroke="white" stroke-width="3" fill="none"/>
+  <line x1="64" y1="28" x2="64" y2="100" stroke="white" stroke-width="3"/>
+  <line x1="28" y1="64" x2="100" y2="64" stroke="white" stroke-width="3"/>
+
+  <!-- Language characters -->
+  <text x="50" y="105" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">A</text>
+  <text x="65" y="105" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">中</text>
+</svg>
