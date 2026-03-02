@@ -35,3 +35,6 @@ icon*.png
 
 # Test logs
 /tmp/
+
+# Claude settings
+.claude/settings.local.json
