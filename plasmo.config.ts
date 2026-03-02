@@ -2,6 +2,7 @@ import type { PlasmoConfig } from "plasmo"
 
 const config: PlasmoConfig = {
   src: "src",
+  // excludes: ["content-debug.tsx"],  // Uncomment to exclude debug version
   manifest: {
     name: "AI Immersive Translate",
     version: "0.0.1",

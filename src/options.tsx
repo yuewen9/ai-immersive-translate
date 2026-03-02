@@ -79,7 +79,7 @@ function IndexOptions() {
     <div className="options-container">
       <header className="options-header">
         <h1>⚙️ AI Immersive Translate Settings</h1>
-        <p className="version">v0.0.1</p>
+        <p className="version">v0.0.3</p>
       </header>
 
       <main className="options-content">
@@ -335,7 +335,7 @@ function IndexOptions() {
 
       <footer className="options-footer">
         <p>
-          AI Immersive Translate v0.0.1 |{' '}
+          AI Immersive Translate v0.0.3 |{' '}
           <a
             href="https://github.com/yourusername/ai-immersive-translate"
             target="_blank"

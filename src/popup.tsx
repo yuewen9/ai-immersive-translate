@@ -72,7 +72,7 @@ function IndexPopup() {
     <div className="popup-container">
       <header className="popup-header">
         <h1>🌐 AI Immersive Translate</h1>
-        <p className="version">v0.0.1</p>
+        <p className="version">v0.0.3</p>
       </header>
 
       <div className="popup-content">
