@@ -1,11 +1,11 @@
 /**
- * Content script - Shift + Hover to translate
+ * Content script - Simplified working version
  */
 
+console.log('🌐 AI Immersive Translate Loading...');
+
 import { Storage } from '@plasmohq/storage';
-import { TextExtractor } from './core/extractor/TextExtractor';
 import { TranslationEngine } from './core/translator/TranslationEngine';
-import { BilingualRenderer } from './core/renderer/BilingualRenderer';
 import { ExtensionConfig } from './types';
 import { DEFAULT_CONFIG } from './lib/constants';
 
@@ -13,96 +13,138 @@ const storage = new Storage();
 
 let config: ExtensionConfig = DEFAULT_CONFIG;
 let translationEngine: TranslationEngine | null = null;
-let renderer: BilingualRenderer | null = null;
-let currentHoveredElement: HTMLElement | null = null;
 let isShiftPressed = false;
-let isTranslating = false;
-let translationCache = new Map<string, string>();
+let currentElement: HTMLElement | null = null;
+
+// Inject styles immediately
+const style = document.createElement('style');
+style.textContent = `
+  .ai-translate-highlight {
+    outline: 3px solid #667eea !important;
+    outline-offset: 2px;
+    background-color: rgba(102, 126, 234, 0.1) !important;
+    cursor: pointer;
+  }
+  .ai-translate-result {
+    margin: 12px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-left: 4px solid #667eea;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .ai-translate-loading {
+    position: relative;
+  }
+  .ai-translate-loading::after {
+    content: '翻译中...';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+`;
+document.head.appendChild(style);
+console.log('✅ Styles injected');
+
+// Show test indicator
+function showTestIndicator() {
+  const indicator = document.createElement('div');
+  indicator.id = 'ai-translate-indicator';
+  indicator.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    z-index: 999999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  `;
+  indicator.innerHTML = '🌐 AI Translate Active<br><small>Shift+Hover to translate</small>';
+  document.body.appendChild(indicator);
+  console.log('✅ Indicator shown');
+
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    indicator.style.opacity = '0';
+    indicator.style.transition = 'opacity 0.5s';
+    setTimeout(() => indicator.remove(), 500);
+  }, 5000);
+}
 
 // Initialize
 async function init() {
+  console.log('🚀 Initializing...');
+
   try {
+    // Wait for body
+    if (!document.body) {
+      console.log('⏳ Waiting for body...');
+      setTimeout(init, 100);
+      return;
+    }
+
+    // Show indicator
+    showTestIndicator();
+
     // Load config
     const savedConfig = await storage.get<ExtensionConfig>('ai_translate_config');
     if (savedConfig) {
       config = savedConfig;
+      console.log('✅ Config loaded');
     }
 
-    // Initialize translation engine if API key is set
+    // Initialize translation engine
     if (config.api.apiKey) {
       translationEngine = new TranslationEngine(config.api.apiKey, config.api.model);
+      console.log('✅ Translation engine initialized');
+    } else {
+      console.warn('⚠️ No API key set');
     }
 
-    // Initialize renderer
-    renderer = new BilingualRenderer({
-      mode: 'inline-below', // 特殊模式：在元素下方显示
-      fontSize: config.display.fontSize,
-      fontFamily: config.display.fontFamily,
-      textColor: config.display.textColor,
-      highlightColor: config.display.highlightColor,
-    });
+    // Setup event listeners
+    setupListeners();
 
-    // Inject styles
-    renderer.injectStyles();
+    console.log('✅ Initialization complete!');
+    console.log('💡 Hover over text and press Shift to translate');
 
-    // Setup hover + shift listeners
-    setupHoverTranslation();
-
-    // Setup keyboard listeners
-    setupKeyboardListeners();
-
-    // Show usage hint
-    showUsageHint();
-
-    console.log('🌐 AI Immersive Translate initialized (Shift + Hover mode)');
   } catch (error) {
-    console.error('Failed to initialize:', error);
+    console.error('❌ Init error:', error);
   }
 }
 
-/**
- * Setup hover translation
- */
-function setupHoverTranslation() {
-  // Track mouse movement
-  document.addEventListener('mouseover', (e) => {
-    const target = e.target as HTMLElement;
+// Setup event listeners
+function setupListeners() {
+  console.log('🎧 Setting up listeners...');
 
-    // Find the nearest text container
-    const textContainer = findTextContainer(target);
-
-    if (textContainer && textContainer !== currentHoveredElement) {
-      currentHoveredElement = textContainer;
-
-      // Highlight on hover if shift is pressed
-      if (isShiftPressed) {
-        highlightElement(textContainer);
-      }
-    }
-  });
-
-  // Handle mouse leave
-  document.addEventListener('mouseout', (e) => {
-    const target = e.target as HTMLElement;
-    if (target === currentHoveredElement) {
-      removeHighlight(target);
-    }
-  });
-
-  console.log('✓ Hover translation enabled');
-}
-
-/**
- * Setup keyboard listeners for Shift key
- */
-function setupKeyboardListeners() {
-  document.addEventListener('keydown', async (e) => {
+  // Track Shift key
+  document.addEventListener('keydown', (e) => {
     if (e.key === 'Shift' && !isShiftPressed) {
       isShiftPressed = true;
+      console.log('⌨️ Shift pressed');
 
-      // If hovering over an element, translate it
-      if (currentHoveredElement) {
-        await translateCurrentElement();
+      // Translate if hovering
+      if (currentElement && translationEngine) {
+        console.log('🎯 Translating...');
+        translateNow(currentElement);
       }
     }
   });
@@ -110,307 +152,133 @@ function setupKeyboardListeners() {
   document.addEventListener('keyup', (e) => {
     if (e.key === 'Shift') {
       isShiftPressed = false;
-
-      // Remove highlights
-      document.querySelectorAll('.ai-translate-highlight').forEach(el => {
-        removeHighlight(el as HTMLElement);
-      });
+      console.log('⌨️ Shift released');
     }
   });
-}
 
-/**
- * Find the nearest text container element
- */
-function findTextContainer(element: HTMLElement): HTMLElement | null {
-  // Check if element itself has enough text
-  if (hasTranslatableText(element)) {
-    return element;
-  }
+  // Track mouse hover
+  document.addEventListener('mouseover', (e) => {
+    const target = e.target as HTMLElement;
+    const text = target.textContent?.trim();
 
-  // Check parent elements
-  let parent = element.parentElement;
-  let depth = 0;
-  const maxDepth = 5;
+    // Check if element has translatable text
+    if (text && text.length >= 10 && text.length <= 2000) {
+      // Remove highlight from previous element
+      if (currentElement && currentElement !== target) {
+        currentElement.classList.remove('ai-translate-highlight');
+      }
 
-  while (parent && depth < maxDepth) {
-    if (shouldTranslateContainer(parent)) {
-      return parent;
+      currentElement = target;
+      currentElement.classList.add('ai-translate-highlight');
     }
-    parent = parent.parentElement;
-    depth++;
-  }
+  });
 
-  return null;
+  document.addEventListener('mouseout', (e) => {
+    const target = e.target as HTMLElement;
+    target.classList.remove('ai-translate-highlight');
+    if (target === currentElement) {
+      currentElement = null;
+    }
+  });
+
+  console.log('✅ Listeners ready');
 }
 
-/**
- * Check if element has translatable text
- */
-function hasTranslatableText(element: HTMLElement): boolean {
-  const text = element.textContent?.trim() || '';
-  if (text.length < 10) return false;
-  if (text.length > 5000) return false;
-
-  // Check if contains meaningful content
-  return /[a-zA-Z\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff]{20,}/.test(text);
-}
-
-/**
- * Check if container should be translated
- */
-function shouldTranslateContainer(element: HTMLElement): boolean {
-  // Skip certain tags
-  const skipTags = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'NAV', 'FOOTER', 'HEADER'];
-  if (skipTags.includes(element.tagName)) {
-    return false;
-  }
-
-  // Skip if has specific classes
-  if (element.classList.contains('no-translate') ||
-      element.dataset.translate === 'false') {
-    return false;
-  }
-
-  return hasTranslatableText(element);
-}
-
-/**
- * Translate the currently hovered element
- */
-async function translateCurrentElement() {
-  if (!currentHoveredElement || isTranslating || !translationEngine) {
+// Translate function
+async function translateNow(element: HTMLElement) {
+  if (!translationEngine) {
+    console.warn('⚠️ No translation engine');
+    showError(element, '请先设置API Key');
     return;
   }
 
-  const element = currentHoveredElement;
   const text = element.textContent?.trim();
-
-  if (!text || text.length < 10 || text.length > 5000) {
+  if (!text || text.length < 10) {
+    console.warn('⚠️ Text too short:', text?.length);
     return;
   }
 
-  // Check cache
-  const cacheKey = text.substring(0, 100);
-  if (translationCache.has(cacheKey)) {
-    showTranslation(element, translationCache.get(cacheKey)!);
-    return;
-  }
+  console.log('📝 Translating:', text.substring(0, 50) + '...');
 
-  isTranslating = true;
-  highlightElement(element);
+  // Show loading
+  element.classList.add('ai-translate-loading');
 
   try {
-    // Show loading indicator
-    showLoadingIndicator(element);
-
     // Translate
     const result = await translationEngine.translate(text, {
       from: config.translation.sourceLanguage,
       to: config.translation.targetLanguage,
     });
 
-    // Cache result
-    translationCache.set(cacheKey, result.translatedText);
+    // Hide loading
+    element.classList.remove('ai-translate-loading');
 
-    // Show translation
+    // Show result
     showTranslation(element, result.translatedText);
-
-    // Update statistics
-    await updateStatistics();
+    console.log('✅ Translation complete');
 
   } catch (error) {
-    console.error('Translation failed:', error);
-    showErrorIndicator(element);
-  } finally {
-    isTranslating = false;
-    hideLoadingIndicator(element);
+    console.error('❌ Translation error:', error);
+    element.classList.remove('ai-translate-loading');
+    showError(element, '翻译失败：' + (error as Error).message);
   }
 }
 
-/**
- * Show translation below element
- */
+// Show translation
 function showTranslation(element: HTMLElement, translation: string) {
-  // Remove existing translation if any
-  removeTranslation(element);
+  // Remove existing translation
+  let existing = element.nextElementSibling;
+  if (existing && existing.classList.contains('ai-translate-result')) {
+    existing.remove();
+  }
 
   // Create translation container
-  const translationDiv = document.createElement('div');
-  translationDiv.className = 'ai-translate-inline-translation';
-  translationDiv.setAttribute('data-ai-translate', 'inline');
-
-  translationDiv.innerHTML = `
-    <div class="ai-translate-divider"></div>
-    <div class="ai-translate-content">
-      <div class="ai-translate-badge">AI翻译</div>
-      <div class="ai-translate-text">${escapeHtml(translation)}</div>
-    </div>
-  `;
-
-  // Insert after the element
-  if (element.parentNode) {
-    element.parentNode.insertBefore(translationDiv, element.nextSibling);
-  }
-
-  // Highlight the original element
-  element.classList.add('ai-translate-original-highlight');
-
-  // Scroll into view if needed
-  setTimeout(() => {
-    translationDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 100);
-}
-
-/**
- * Remove translation from element
- */
-function removeTranslation(element: HTMLElement) {
-  // Remove existing translation
-  const existingTranslation = element.nextElementSibling;
-  if (existingTranslation &&
-      existingTranslation.getAttribute('data-ai-translate') === 'inline') {
-    existingTranslation.remove();
-  }
-
-  element.classList.remove('ai-translate-original-highlight');
-}
-
-/**
- * Highlight element on hover
- */
-function highlightElement(element: HTMLElement) {
-  element.classList.add('ai-translate-highlight');
-}
-
-/**
- * Remove highlight from element
- */
-function removeHighlight(element: HTMLElement) {
-  element.classList.remove('ai-translate-highlight');
-}
-
-/**
- * Show loading indicator
- */
-function showLoadingIndicator(element: HTMLElement) {
-  element.classList.add('ai-translate-loading');
-}
-
-/**
- * Hide loading indicator
- */
-function hideLoadingIndicator(element: HTMLElement) {
-  element.classList.remove('ai-translate-loading');
-}
-
-/**
- * Show error indicator
- */
-function showErrorIndicator(element: HTMLElement) {
-  element.classList.add('ai-translate-error');
-  setTimeout(() => {
-    element.classList.remove('ai-translate-error');
-  }, 2000);
-}
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(text: string): string {
   const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+  div.className = 'ai-translate-result';
 
-/**
- * Show usage hint
- */
-function showUsageHint() {
-  // Check if hint was already shown
-  const hintShown = localStorage.getItem('ai_translate_hint_shown');
-  if (hintShown) return;
+  // Escape HTML
+  const escapedText = translation
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
 
-  // Create hint element
-  const hint = document.createElement('div');
-  hint.className = 'ai-translate-usage-hint';
-  hint.innerHTML = `
-    💡 <strong>提示</strong>: 鼠标悬停在文本上，按住 <strong>Shift</strong> 键即可翻译！
+  div.innerHTML = `
+    <div style="font-weight:600; margin-bottom:8px; color:#667eea;">
+      🌐 AI翻译
+    </div>
+    <div>${escapedText}</div>
   `;
 
-  // Add click to dismiss
-  hint.addEventListener('click', () => {
-    hint.remove();
-    localStorage.setItem('ai_translate_hint_shown', 'true');
-  });
+  // Insert after element
+  if (element.parentNode) {
+    element.parentNode.insertBefore(div, element.nextSibling);
+  }
 
-  // Auto-hide after 10 seconds
-  setTimeout(() => {
-    if (hint.parentNode) {
-      hint.style.opacity = '0';
-      setTimeout(() => hint.remove(), 300);
-    }
-    localStorage.setItem('ai_translate_hint_shown', 'true');
-  }, 10000);
-
-  document.body.appendChild(hint);
+  // Scroll into view
+  div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-/**
- * Update statistics
- */
-async function updateStatistics() {
-  try {
-    const stats = await storage.get('ai_translate_statistics');
-    const currentStats = stats && typeof stats === 'object' ? stats as any : {
-      translationsCount: 0,
-      charactersCount: 0,
-      apiCost: 0,
-    };
+// Show error
+function showError(element: HTMLElement, message: string) {
+  const div = document.createElement('div');
+  div.className = 'ai-translate-result';
+  div.style.borderLeftColor = '#e74c3c';
+  div.textContent = '❌ ' + message;
 
-    await storage.set('ai_translate_statistics', {
-      ...currentStats,
-      translationsCount: (currentStats.translationsCount || 0) + 1,
-    });
-  } catch (error) {
-    console.error('Failed to update statistics:', error);
+  if (element.parentNode) {
+    element.parentNode.insertBefore(div, element.nextSibling);
   }
+
+  setTimeout(() => div.remove(), 3000);
 }
 
-// Listen for messages from background/popup
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Received message:', message);
-
-  if (message.type === 'TRANSLATE_PAGE') {
-    // For now, just show a message
-    alert('Please hover over any text and press Shift to translate!');
-    sendResponse({ success: true });
-  }
-
-  return true;
-});
-
-// Listen for config changes
-storage.watch({
-  ai_translate_config: (newConfig) => {
-    console.log('Config updated:', newConfig);
-    if (newConfig && typeof newConfig === 'object') {
-      config = newConfig as ExtensionConfig;
-
-      // Reinitialize translation engine
-      if (config.api.apiKey) {
-        translationEngine = new TranslationEngine(config.api.apiKey, config.api.model);
-      }
-
-      // Clear cache on config change
-      translationCache.clear();
-    }
-  }
-});
-
-// Initialize on load
+// Start
+console.log('⏳ Waiting to initialize...');
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
 }
+
+console.log('🌐 Content script loaded');
